@@ -99,4 +99,26 @@ teacher = Teacher.find(create_params[:teacher_id])
 student = Student.find(create_params[:student_id])
 category = Category.find(create_params[:category_id])
 ```
-Il y un grand probleme de securité sur cet partie, on ne vérifie pas si le teacher_id et student_id est bien l'id des personne connecte, alors on peut passer des réservations pour d'autre personne.
+Il y un grand probleme de securité sur cet partie, on ne vérifie pas si le teacher_id et student_id est bien l'id des personne connecte, alors on peut passer des réservations pour d'autre personne, alors ce qu'on doit faire:
+1- ajouter le notion de qui est fait la resérvation.
+2- comparer l'idee de cette personne avec la id dans le payload.
+
+Dans le [controller globale](https://github.com/HADDADSOHAIB/study-mentors-api/blob/master/app/controllers/application_controller.rb), on a ça:
+```
+ def current_user
+    @current_user ||= if payload['account_type'] == 'Teacher'
+                        Teacher.find(payload['user_id'])
+                      else
+                        Student.find(payload['user_id'])
+                      end
+  end
+```
+Alors on peut vérifier qu'est l'utilisateur connecté on utilison @current_user. Ce code aussi peut être améliorer, en effet, nous avons une mauvaise gestion des exceptions, cette fonction:
+```
+Teacher.find(payload['user_id'])
+```
+lance une exception s'il ne trouve pas de record dans la base de donnés, la chose qui peuvent cassé la serveur, pour corriger ça, on peut travailler avec:
+```
+Teacher.find_by(id: payload['user_id'])
+```
+qui fait la même chose, mais envoyer la valeur nil, s'il le record n'existe pas.
